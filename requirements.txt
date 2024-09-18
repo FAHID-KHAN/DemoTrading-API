@@ -1,0 +1,9 @@
+fastapi==0.95.2
+uvicorn==0.22.0
+SQLAlchemy==1.4.46
+psycopg2-binary==2.9.6  # For PostgreSQL database integration
+pydantic==1.10.5
+passlib[bcrypt]==1.7.4  # For password hashing
+python-jose==3.3.0  # For JWT token handling
+alembic==1.10.2  # For database migrations 
+pytest==7.2.1  
