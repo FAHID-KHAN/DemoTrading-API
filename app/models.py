@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from pydantic import BaseModel
 from typing import List
@@ -9,37 +10,51 @@ Base = declarative_base()
 
 # SQLAlchemy Models
 
-class User(Base):
-    """
-    SQLAlchemy model for storing user account information.
-    """
-    __tablename__ = "users"
+class Account(Base):
+    __tablename__ = 'accounts'
+    
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    balance = Column(Float, default=0.0)
+    name = Column(String)
+    email = Column(String)
+    password = Column(String)  # Add password to store the hashed password
+    balance = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    transactions = relationship("Transaction", back_populates="account")
+    daily_balances = relationship("DailyBalance", back_populates="account")
 
 
 class Transaction(Base):
-    """
-    SQLAlchemy model for storing asset transactions.
-    """
-    __tablename__ = "transactions"
+    __tablename__ = 'transactions'
+    
     id = Column(Integer, primary_key=True, index=True)
-    account_id = Column(Integer)
+    account_id = Column(Integer, ForeignKey('accounts.id'))
     asset = Column(String)
-    transaction_type = Column(String)
     quantity = Column(Float)
     price_per_unit = Column(Float)
+    transaction_type = Column(String)
     total_amount = Column(Float)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    account = relationship("Account", back_populates="transactions")
 
+
+class DailyBalance(Base):
+    __tablename__ = 'daily_balances'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey('accounts.id'))
+    balance = Column(Float)
+    date = Column(DateTime, default=datetime.utcnow)
+    
+    # Fix the relationship by using a string reference to 'Account'
+    account = relationship("Account", back_populates="daily_balances")
 
 # Pydantic Models
 
-class Account(BaseModel):
+# Rename to avoid conflict with SQLAlchemy model
+class AccountCreate(BaseModel):
     name: str
     email: str
     password: str
@@ -76,3 +91,12 @@ class TransactionResponse(BaseModel):
 class AccountStats(BaseModel):
     balance: float
     total_assets: float
+    daily_gain_loss: float
+    weekly_gain_loss: float
+    monthly_gain_loss: float
+    drawdown: float
+    standard_deviation: float
+    volatility: float
+
+    class Config:
+        orm_mode = True
